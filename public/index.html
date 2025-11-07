@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparação Compilador x Interpretador</title>
+
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Vue 2 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #0d6efd22, #20c99722);
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+            padding: 2rem;
+        }
+
+        .container-box {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .lang-card {
+            flex: 1 1 420px;
+            background: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            transition: transform 0.2s ease;
+        }
+
+        .lang-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .output-box {
+            background-color: #000;
+            color: #0f0;
+            font-family: "Fira Code", monospace;
+            border-radius: 8px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .comparison-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .comparison-card {
+            background: #fff;
+            padding: 1rem 1.5rem;
+            border-radius: 0.8rem;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: fit-content;
+        }
+
+        .faster {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #198754;
+        }
+
+        .slower {
+            color: #dc3545;
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+            border-width: .15em;
+        }
+
+        .toggle-history {
+            cursor: pointer;
+            font-size: 1.3rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold">💻 Comparação: C (Compilado) x Python (Interpretado)</h2>
+            <p class="text-secondary">Veja na prática a diferença de desempenho entre as linguagens</p>
+        </div>
+
+        <div class="container-box">
+            <!-- C -->
+            <div class="lang-card">
+                <h4 class="text-primary fw-bold mb-3">Código em C</h4>
+                <label class="form-label">Digite o termo N da sequência de Fibonacci:</label>
+                <input type="number" class="form-control mb-3" v-model.number="nC" placeholder="Ex: 35">
+                <button class="btn btn-primary w-100" :disabled="loadingC" @click="runC">
+                    <span v-if="loadingC" class="spinner-border spinner-border-sm me-2"></span>
+                    {{ loadingC ? 'Executando...' : 'Executar em C' }}
+                </button>
+                <div class="output-box">{{ outputC }}</div>
+            </div>
+
+            <!-- Python -->
+            <div class="lang-card">
+                <h4 class="text-warning fw-bold mb-3">Código em Python</h4>
+                <label class="form-label">Digite o termo N da sequência de Fibonacci:</label>
+                <input type="number" class="form-control mb-3" v-model.number="nPython" placeholder="Ex: 35">
+                <button class="btn btn-warning w-100" :disabled="loadingPython" @click="runPython">
+                    <span v-if="loadingPython" class="spinner-border spinner-border-sm me-2 text-warning"></span>
+                    {{ loadingPython ? 'Executando...' : 'Executar em Python' }}
+                </button>
+                <div class="output-box">{{ outputPython }}</div>
+            </div>
+        </div>
+
+        <!-- Resultado Atual -->
+        <div class="comparison-container mt-4" v-if="comparacaoAtual">
+            <div class="comparison-card">
+                <h5>Resultado Atual</h5>
+                <div v-html="comparacaoAtual.msg"></div>
+                <small class="text-muted">C: {{ comparacaoAtual.cTime.toFixed(6) }}s | Python: {{
+                    comparacaoAtual.pyTime.toFixed(6) }}s</small>
+            </div>
+        </div>
+
+        <hr class="my-5">
+
+        <!-- Histórico Toggle -->
+        <div class="mb-3 d-flex align-items-center justify-content-start gap-3">
+            <h3 class="mb-0">Histórico de Comparações</h3>
+            <!-- Toggle de mostrar/esconder histórico -->
+            <button class="btn btn-outline-secondary btn-sm" @click="mostrarHistorico = !mostrarHistorico">
+                <i :class="mostrarHistorico ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill'"></i>
+            </button>
+        </div>
+
+        <!-- Cards do histórico -->
+        <div class="d-flex flex-wrap gap-2 mt-2" v-if="mostrarHistorico">
+            <div v-for="(h, i) in historico" :key="i" class="comparison-card">
+                <strong>{{ h.timestamp }}</strong>
+                <div v-html="h.msg"></div>
+                <small class="text-muted">C: {{ h.cTime.toFixed(6) }}s | Python: {{ h.pyTime.toFixed(6) }}s</small>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <script>
+        const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true });
+
+        new Vue({
+            el: '#app',
+            data: {
+                nC: null,
+                nPython: null,
+                loadingC: false,
+                loadingPython: false,
+                outputC: '',
+                outputPython: '',
+                cTime: null,
+                pyTime: null,
+                comparacaoAtual: null,
+                historico: [],
+                mostrarHistorico: true
+            },
+            methods: {
+                async runC() {
+                    if (!this.nC) return Toast.fire({ icon: "warning", title: "Digite um valor para C" });
+                    this.loadingC = true; this.outputC = '';
+                    try {
+                        const res = await fetch("/run-c", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ n: this.nC }) });
+                        const text = await res.text();
+                        this.outputC = text;
+                        const match = text.match(/Tempo de execucao: ([0-9.]+)/);
+                        this.cTime = match ? parseFloat(match[1]) : null;
+                        Toast.fire({ icon: "success", title: "Execução em C finalizada!" });
+                        this.atualizarComparacao();
+                    } catch (e) { Toast.fire({ icon: "error", title: "Erro ao executar C" }); }
+                    finally { this.loadingC = false; }
+                },
+                async runPython() {
+                    if (!this.nPython) return Toast.fire({ icon: "warning", title: "Digite um valor para Python" });
+                    this.loadingPython = true; this.outputPython = '';
+                    try {
+                        const res = await fetch("/run-python", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ n: this.nPython }) });
+                        const text = await res.text();
+                        this.outputPython = text;
+                        const match = text.match(/Tempo de execucao: ([0-9.]+)/);
+                        this.pyTime = match ? parseFloat(match[1]) : null;
+                        Toast.fire({ icon: "success", title: "Execução em Python finalizada!" });
+                        this.atualizarComparacao();
+                    } catch (e) { Toast.fire({ icon: "error", title: "Erro ao executar Python" }); }
+                    finally { this.loadingPython = false; }
+                },
+                atualizarComparacao() {
+                    if (this.cTime != null && this.pyTime != null) {
+                        let msg = '';
+                        if (this.cTime < this.pyTime) {
+                            const ratio = (this.pyTime / this.cTime).toFixed(1);
+                            msg = `<span class='faster'>🏎️ C foi ${ratio}x mais rápido que Python!</span>`;
+                        } else if (this.pyTime < this.cTime) {
+                            const ratio = (this.cTime / this.pyTime).toFixed(1);
+                            msg = `<span class='faster text-warning'>🐍 Python foi ${ratio}x mais rápido que C!</span>`;
+                        } else {
+                            msg = `<span class='text-secondary'>Ambos tiveram desempenho similar.</span>`;
+                        }
+
+                        const now = new Date();
+                        const formatDate = `${String(now.getDate()).padStart(2, '0')}/` +
+                            `${String(now.getMonth() + 1).padStart(2, '0')}/` +
+                            `${now.getFullYear()} - ` +
+                            `${String(now.getHours()).padStart(2, '0')}:` +
+                            `${String(now.getMinutes()).padStart(2, '0')}:` +
+                            `${String(now.getSeconds()).padStart(2, '0')}`;
+
+                        // envia a atual para histórico antes
+                        if (this.comparacaoAtual) this.historico.unshift({ ...this.comparacaoAtual, timestamp: formatDate });
+
+                        this.comparacaoAtual = { msg, cTime: this.cTime, pyTime: this.pyTime, timestamp: formatDate };
+                    }
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>

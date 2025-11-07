@@ -1,0 +1,13 @@
+body {
+  font-family: "Segoe UI", sans-serif;
+}
+
+pre {
+  min-height: 80px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.card {
+  border-radius: 12px;
+}
