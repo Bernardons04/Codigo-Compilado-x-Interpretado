@@ -102,7 +102,7 @@ A aplicação mostra na prática:
 
 ```bash
 # 1. Clonar o repositório
-git clone https://github.com/seuusuario/compilador-vs-interpretador.git
+git clone https://github.com/Bernardons04/Codigo-Compilado-x-Interpretado.git
 
 # 2. Acessar a pasta
 cd compilador-vs-interpretador
@@ -116,14 +116,3 @@ node server.js
 
 Acesse no navegador:
 👉 **[http://localhost:3000](http://localhost:3000)**
-
----
-
-## 🧑‍💻 Autores
-
-| Nome            | Função                  |
-| --------------- | ----------------------- |
-| Bernardo Araújo | Backend e Deploy        |
-| [Colega 1]      | Frontend e Documentação |
-| [Colega 2]      | Pesquisa Conceitual     |
-| [Colega 3]      | Design e Apresentação   |
