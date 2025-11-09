@@ -105,7 +105,7 @@ A aplicação mostra na prática:
 git clone https://github.com/Bernardons04/Codigo-Compilado-x-Interpretado.git
 
 # 2. Acessar a pasta
-cd compilador-vs-interpretador
+cd Codigo-Compilado-x-Interpretado
 
 # 3. Instalar dependências
 npm install
