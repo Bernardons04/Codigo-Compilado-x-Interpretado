@@ -7,7 +7,7 @@ long long fibonacci(int n) {
 }
 
 int main() {
-    int n = 40;
+    int n = 45;
     clock_t inicio = clock();
     long long resultado = fibonacci(n);
     clock_t fim = clock();
