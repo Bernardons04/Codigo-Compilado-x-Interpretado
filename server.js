@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { exec } from "child_process";
 import fs from "fs";
 import path from "path";
@@ -6,6 +7,7 @@ import path from "path";
 const app = express();
 const PORT = 3000;
 
+app.use(cors({ origin: "*" })); 
 app.use(express.json());
 app.use(express.static("public"));
 
